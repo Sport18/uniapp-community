@@ -1,0 +1,25 @@
+{
+  "titleNView": {
+    "searchInput": {
+      "align": "center",
+      "backgroundColor": "#F5F4F2",
+      "borderRadius": "4px",
+      "placeholder": "搜索帖子",
+      "placeholderColor": "#6D6C67"
+    },
+    "buttons": [
+      {
+        "color": "#333333",
+        "colorPressed": "#FF597C",
+        "float": "right",
+        "fontSize": "14px",
+        "text": "搜索"
+      }
+    ]
+  },
+  "usingComponents": {
+    "user-list": "/components/user-list/user-list",
+    "common-list": "/components/common/common-list",
+    "topic-list": "/components/news/topic-list"
+  }
+}
