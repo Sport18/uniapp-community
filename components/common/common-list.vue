@@ -10,7 +10,7 @@
 				<!-- 昵称、发布时间 -->
 				<view>
 					<view class="font" style="line-height: 1.5;">{{item.username}}</view>
-					<view class="font-sm text-light-muted" style="line-height: 1.5;">{{item.newstime}}</view>
+					<view class="font-sm text-light-muted" style="line-height: 1.5;">{{item.newstime|formatTime}}</view>
 				</view>
 			</view>
 			<!-- 按钮 -->
@@ -51,6 +51,7 @@
 </template>
 
 <script>
+	import $T from '@/common/time.js';
 	export default {
 		props: {
 			item: Object,
@@ -63,6 +64,11 @@
 				default: false
 			}
 		},
+		filters: {
+			formatTime: function(value) {
+				return $T.gettime(value);
+			}
+		},
 		methods: {
 			// 打开个人空间
 			openSpace() {
@@ -72,8 +78,10 @@
 			},
 			// 关注
 			follow() {
-				// 通知父组件
-				this.$emit('follow', this.index)
+				this.checkAuth(() => {
+					// 通知父组件
+					this.$emit('follow', this.index)
+				})
 			},
 			// 进入详情页
 			openDetali() {
@@ -84,25 +92,31 @@
 			},
 			// 顶踩操作
 			doSupport(type) {
-				// 通知父组件
-				this.$emit('doSupport', {
-					type: type,
-					index: this.index
+				this.checkAuth(() => {
+					// 通知父组件
+					this.$emit('doSupport', {
+						type: type,
+						index: this.index
+					})
 				})
 			},
 			// 评论
 			doComment() {
-				if(!this.isDetail) {
-					return this.openDetali()
-				}
-				this.$emit("doComment")
+				this.checkAuth(() => {
+					if(!this.isDetail) {
+						return this.openDetali()
+					}
+					this.$emit("doComment")
+				})
 			},
 			// 分享
 			doShare() {
-				if(!this.isDetail) {
-					return this.openDetali()
-				}
-				this.$emit("doShare")
+				this.checkAuth(() => {
+					if(!this.isDetail) {
+						return this.openDetali()
+					}
+					this.$emit("doShare")
+				})
 			}
 		},
 	}

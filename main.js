@@ -1,5 +1,8 @@
 import Vue from 'vue'
 import App from './App'
+import store from './store/index.js'
+
+Vue.prototype.$store = store
 
 Vue.config.productionTip = false
 
@@ -17,9 +20,46 @@ Vue.prototype.$C = $C
 import $U from './common/util.js';
 Vue.prototype.$U = $U
 
+// 引入请求库
+import $H from './common/request.js';
+Vue.prototype.$H = $H
+
+
+// 权限验证操作
+Vue.prototype.checkAuth = (callback) => {
+	// 权限验证
+	if (!store.state.loginStatus) {
+		uni.showToast({
+			title: '请先登录',
+			icon: 'none'
+		})
+		return uni.navigateTo({
+			url: '/pages/login/login'
+		})
+	}
+	callback()
+}
+
+// 跳转权限验证
+Vue.prototype.navigateTo = (options) => {
+	// 权限验证
+	if (!store.state.loginStatus) {
+		uni.showToast({
+			title: '请先登录',
+			icon: 'none'
+		})
+		return uni.navigateTo({
+			url: '/pages/login/login'
+		})
+	}
+	uni.navigateTo(options)
+}
+
+
 App.mpType = 'app'
 
 const app = new Vue({
+	store,
     ...App
 })
 app.$mount()

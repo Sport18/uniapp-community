@@ -4,12 +4,12 @@
 		<common-list :item="info" isDetail @doComment="doComment" @doShare="doShare" @follow="follow" @doSupport="doSupport">
 			<view class="">{{info.content}}</view>
 			<view>
-				<image v-for="(item, index) in info.images" :key="index" :src="item.url" class="w-100" mode="widthFix" @click="preview(index)"></image>
+				<image v-for="(item, index) in images" :key="index" :src="item.url" class="w-100" mode="widthFix" @click="preview(index)"></image>
 			</view>
 		</common-list>
 		
 		<divider></divider>
-		<view class="p-2 font-md font-weight-bold">最新评论 3</view>
+		<view class="p-2 font-md font-weight-bold">最新评论 {{info.comment_count}}</view>
 
 		<view class="px-2">
 			<view class="uni-comment-list">
@@ -48,29 +48,10 @@
 		},
 		data() {
 			return {
-				
 				// 当前帖子信息
-				info: {
-					username: "昵称",
-					userpic: "/static/default.jpg",
-					newstime: "2019-10-20 下午04:30",
-					isFollow: false,
-					title: "我是标题",
-					titlepic: "/static/demo/datapic/11.jpg",
-					support: {
-						type: "support", // 顶
-						support_count: 1,
-						unsupport_count: 2
-					},
-					comment_count: 2,
-					share_num: 2,
-					content: "帝莎编程学院：uni-app第二季仿商城类实战项目开发，uni-app第二季仿微信实战项目开发",
-					images: [{
-						url: "https://tangzhe123-com.oss-cn-shenzhen.aliyuncs.com/Appstatic/qsbk/demo/datapic/4.jpg"
-					}, {
-						url: "https://tangzhe123-com.oss-cn-shenzhen.aliyuncs.com/Appstatic/qsbk/demo/datapic/5.jpg"
-					}]
-				}
+				info: {},
+				images: [],
+				commentList: []
 			}
 		},
 		onLoad(e) {
@@ -81,11 +62,16 @@
 		},
 		computed: {
 			imagesList() {
-				return this.info.images.map(item => item.url)
+				return this.images.map(item => item.url)
 			}
 		},
 		onNavigationBarButtonTap() {
-			this.$refs.share.open()
+			this.$refs.share.open({
+				title: this.info.title,
+				shareText: this.info.title,
+				href:"https://uniapp.dcloud.io",
+				image: this.info.titlepic,
+			})
 		},
 		onBackPress() {
 			this.$refs.share.close()
@@ -95,6 +81,12 @@
 				// 修改标题
 				uni.setNavigationBarTitle({
 					title: data.title
+				})
+				this.info = data
+				this.info.content = ''
+				this.$H.get('/post/'+this.info.id).then(res => {
+					this.info.content = res.detail.content
+					this.images = res.detail.images
 				})
 			},
 			// 点击评论

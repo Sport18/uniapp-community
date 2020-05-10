@@ -25,119 +25,25 @@
 					<user-list :item="item" :index="index"></user-list>
 				</template>
 			</block>
+			
+			<!-- 上拉加载 -->
+			<load-more :loadmore="loadmore"></load-more>
 		</template>
 
 	</view>
 </template>
 
 <script>
-	// 测试数据
-	const demo1 = [{
-			username: "昵称",
-			userpic: "/static/default.jpg",
-			newstime: "2019-10-20 下午4:30",
-			isFollow: false,
-			title: "我是标题！",
-			titlepic: "/static/demo/datapic/3.jpg",
-			support: {
-				type: "support", // 顶
-				support_count: 1,
-				unsupport_count: 2
-			},
-			comment_count: 2,
-			share_num: 2
-		},
-		{
-			username: "昵称",
-			userpic: "/static/default.jpg",
-			newstime: "2019-10-20 下午4:30",
-			isFollow: false,
-			title: "我是标题！",
-			titlepic: "",
-			support: {
-				type: "unsupport", // 踩
-				support_count: 1,
-				unsupport_count: 2
-			},
-			comment_count: 2,
-			share_num: 0
-		},
-		{
-			username: "昵称",
-			userpic: "/static/default.jpg",
-			newstime: "2019-10-20 下午4:30",
-			isFollow: false,
-			title: "我是标题！",
-			titlepic: "",
-			support: {
-				type: "", // 未操作
-				support_count: 1,
-				unsupport_count: 2
-			},
-			comment_count: 2,
-			share_num: 0
-		}
-	]
-	const demo2 = [{
-		cover: "/static/demo/topicpic/1.jpeg",
-		title: "话题名称",
-		desc: "话题描述",
-		today_count: 10,
-		new_count: 10
-	}, {
-		cover: "/static/demo/topicpic/1.jpeg",
-		title: "话题名称",
-		desc: "话题描述",
-		today_count: 10,
-		new_count: 10
-	}, {
-		cover: "/static/demo/topicpic/1.jpeg",
-		title: "话题名称",
-		desc: "话题描述",
-		today_count: 10,
-		new_count: 10
-	}, {
-		cover: "/static/demo/topicpic/1.jpeg",
-		title: "话题名称",
-		desc: "话题描述",
-		today_count: 10,
-		new_count: 10
-	}, {
-		cover: "/static/demo/topicpic/1.jpeg",
-		title: "话题名称",
-		desc: "话题描述",
-		today_count: 10,
-		new_count: 10
-	}, {
-		cover: "/static/demo/topicpic/1.jpeg",
-		title: "话题名称",
-		desc: "话题描述",
-		today_count: 10,
-		new_count: 10
-	}, ]
-	const demo3 = [{
-			avatar: "/static/default.jpg",
-			username: "昵称",
-			sex: 1,
-			age: 24,
-			isFollow: true,
-		},
-		{
-			avatar: "/static/default.jpg",
-			username: "昵称",
-			sex: 2,
-			age: 24,
-			isFollow: false,
-		},
-	];
 	import commonList from '@/components/common/common-list.vue';
 	import topicList from '@/components/news/topic-list.vue';
 	import userList from '@/components/user-list/user-list.vue';
+	import loadMore from '@/components/common/load-more.vue';
 	export default {
 		components: {
 			commonList,
 			topicList,
-			userList
+			userList,
+			loadMore
 		},
 		data() {
 			return {
@@ -146,7 +52,9 @@
 				// 搜索结果
 				searchList: [],
 				// 当前搜索类型
-				type: "post"
+				type: "post",
+				loadmore: "上拉加载更多",
+				page: 1
 			}
 		},
 		onLoad(e) {
@@ -185,6 +93,10 @@
 				this.searchEvent()
 			}
 		},
+		// 监听下拉刷新
+		onPullDownRefresh() {
+			this.getData()
+		},
 		methods: {
 			// 点击搜索历史
 			clickSearchHistory(text) {
@@ -195,28 +107,41 @@
 			searchEvent() {
 				// 收起键盘
 				uni.hideKeyboard()
+				// 请求搜索
+				this.getData()
+			},
+			
+			// 获取数据
+			getData(isrefresh = true) {
 				// 显示loading状态
 				uni.showLoading({
 					title: '加载中...'
 				});
 				// 请求搜索
-				setTimeout(() => {
-					switch (this.type){
-						case 'post':
-						this.searchList = demo1
-							break;
-						case 'topic':
-						this.searchList = demo2
-							break;
-						case 'user':
-						this.searchList = demo3
-							break;
-					}
+				if (isrefresh) {
+					this.page = 1
+				}
+				this.$H.post('/search/' + this.type, {
+					keyword: this.searchText,
+					page: this.page
+				}).then(res => {
+					// 整理格式
+					let list = res.list.map(v => {
+						return this.$U.formatCommonList(v)
+					})
+					
+					// 渲染页面
+					this.searchList = isrefresh ? [...list] : [...this.searchList, ...list]
+					// 加载情况
+					this.loadmore = list.length < 10 ? '没有更多了' : '上拉加载更多'
+					
 					// 隐藏loading状态
 					uni.hideLoading()
-				}, 2000)
-			}
-		}
+				}).catch(err => {
+					uni.hideLoading()
+				})
+			},
+		} 
 	}
 </script>
 

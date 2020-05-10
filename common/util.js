@@ -47,5 +47,24 @@ export default {
 		    });  
 		});  
 		// #endif
-	}
+	},
+	// 转化公共列表数据
+	formatCommonList(v) {
+		return {
+			id: v.id,
+			username: v.user.username,
+			userpic: v.user.userpic,
+			newstime: v.create_time,
+			title: v.title,
+			titlepic: v.titlepic,
+			isFollow: false,
+			support: {
+				type: "support", // 顶
+				support_count: 1,
+				unsupport_count: 2
+			},
+			comment_count: v.comment_count,
+			share_num: v.sharenum
+		}
+	},
 }
