@@ -48,7 +48,7 @@
 		data() {
 			return {
 				searchText: "",
-				list: ['uni-app第二季商城类项目', '你是世界', '该如何才能摆脱', '记住目前的心情'],
+				list: [],
 				// 搜索结果
 				searchList: [],
 				// 当前搜索类型
@@ -80,8 +80,14 @@
 			tn.searchInput.placeholder = '搜索' + pageTitle;
 			currentWebview.setStyle({
 				titleNView: tn
-				// #endif
 			})
+			// #endif
+			
+			// 取出搜索历史
+			let list = uni.getStorageSync('historySeachText')
+			if(list) {
+				
+			}
 		},
 		// 监听导航栏输入
 		onNavigationBarSearchInputChanged(e) {
@@ -95,7 +101,21 @@
 		},
 		// 监听下拉刷新
 		onPullDownRefresh() {
-			this.getData()
+			if (this.searchText === '') {
+				return uni.stopPullDownRefresh()
+			}
+			this.getData(true, () => {
+				// 关闭下拉刷新
+				uni.stopPullDownRefresh()
+			})
+		},
+		// 监听上拉加载
+		onReachBottom() {
+			if(this.loadmore !== '上拉加载更多') {
+				return;
+			}
+			this.loadmore = '加载中...'
+			this.getData(false,)
 		},
 		methods: {
 			// 点击搜索历史
@@ -107,20 +127,27 @@
 			searchEvent() {
 				// 收起键盘
 				uni.hideKeyboard()
+				// 加入搜索历史
+				let index = this.list.findIndex(v => v===this.searchText)
+				if (index !== -1) {
+					this.$U._toFirst(this.list, index)
+				} else {
+					this.list.unshift(this.searchText)
+				}
+				uni.setStorageSync('historySeachText', JSON.stringify(this.list))
 				// 请求搜索
 				this.getData()
 			},
 			
 			// 获取数据
-			getData(isrefresh = true) {
+			getData(isrefresh = true, callback = false) {
 				// 显示loading状态
 				uni.showLoading({
 					title: '加载中...'
 				});
 				// 请求搜索
-				if (isrefresh) {
-					this.page = 1
-				}
+				this.page = isrefresh ? 1 : (this.page + 1 )
+				
 				this.$H.post('/search/' + this.type, {
 					keyword: this.searchText,
 					page: this.page
@@ -137,8 +164,16 @@
 					
 					// 隐藏loading状态
 					uni.hideLoading()
+					
+					if(typeof callback === 'function') {
+						callback()
+					}
 				}).catch(err => {
+					this.page--
 					uni.hideLoading()
+					if(typeof callback === 'function') {
+						callback()
+					}
 				})
 			},
 		} 

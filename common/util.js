@@ -67,4 +67,12 @@ export default {
 			share_num: v.sharenum
 		}
 	},
+	
+	// 数组元素置顶
+	_toFirst(arr, index) {
+		if (index != 0) {
+			arr.unshift(arr.splice(index, 1)[0])
+		}
+		return arr
+	}
 }
