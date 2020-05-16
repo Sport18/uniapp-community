@@ -53,7 +53,6 @@
 				// 顶部选项卡
 				tabBars: [],
 				newsList: []
-
 			}
 		},
 		// 监听点击导航栏搜索框
@@ -116,9 +115,12 @@
 					})
 					this.newsList[index].list = isrefresh ? list : [...this.newsList[index].list, ...list],
 					this.newsList[index].loadmore = list.length < 10 ? '没有更多了' : '上拉加载更多'
-					console.log('加载数据');
 					if (isrefresh) {
 						this.newsList[index].firstLoad = true
+					}
+				}).catch(err => {
+					if(!isrefresh) {
+						this.newsList[index].page--
 					}
 				})
 			},

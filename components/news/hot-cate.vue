@@ -7,7 +7,7 @@
 			</view>
 		</view>
 		<view class="flex align-center py-3 px-2 border-bottom">
-			<view class="border rounded bg-light mx-1 px-2 animated" hover-class="pulse" v-for="(item, index) in hotcate" :key="index" @click="openDetail(item)">
+			<view class="border rounded bg-light mx-1 px-2 animated" hover-class="pulse" v-for="(item, index) in hotcate" :key="index" @click="openMore">
 				{{item.name}}
 			</view>
 		</view>
@@ -24,10 +24,6 @@
 					url: '../../pages/topic-nav/topic-nav',
 				});
 			},
-			// 点击话题分类
-			openDetail(item) {
-				console.log(item);
-			}
 		}
 	}
 </script>

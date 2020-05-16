@@ -36,10 +36,12 @@
 						</view>
 					</view>
 					<!-- 轮播图 -->
-					 <swiper class="px-2 pb-2" :indicator-dots="true" :autoplay="true" :interval="3000" :duration="1000">
-						 <swiper-item>
-							 <image src="/static/demo/banner2.jpg" style="height: 300rpx;" class="w-100 rounded"></image>
-						 </swiper-item>
+					<swiper class="px-2 pb-2" :indicator-dots="true" :autoplay="true" :interval="3000" :duration="1000">
+						<block v-for="(item, index) in swiperList" :key="index">
+							<swiper-item>
+								<image :src="item.src" style="height: 300rpx;" class="w-100 rounded"></image>
+							</swiper-item>
+						</block>
 					</swiper>
 					<divider></divider>
 					<!-- 最近更新 -->
@@ -128,70 +130,62 @@
 				list: [],
 				// 1. 上拉加载更多 2.加载中... 3.没有更多了
 				loadmore: "上拉加载更多",
-				
-				hotcate:[{
-					name: "关注",
-				},{
-					name: "推荐",
-				},{
-					name: "体育",
-				},{
-					name: "热点",
-				},{
-					name: "财经",
-				},{
-					name: "娱乐",
-				}],
-				topicList: [{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},]
+
+				hotcate: [],
+				topicList: [],
+				swiperList: []
 			}
 		},
 		onLoad() {
 			// 计算屏幕宽度
 			uni.getSystemInfo({
 					success: res => {
-						this.scrollH = res.windowHeight - res.statusBarHeight - 94
+						this.scrollH = res.windowHeight - res.statusBarHeight - 44
 					}
 				}),
-				// 加载测试数据
-				this.list = demo
+			// 加载测试数据
+			this.list = demo
+			
+			//获取数据
+			this.getTopicNav()
+			this.getHotTopic()
+			this.getSwipers()
 		},
 		methods: {
+			// 获取热门分类
+			getTopicNav() {
+				this.$H.get('/topicclass').then(res => {
+					this.hotcate = res.list.map(item => {
+						return {
+							id: item.id,
+							name: item.classname
+						}
+					})
+				})
+			},
+			// 获取热门话题
+			getHotTopic() {
+				this.$H.get('/hottopic').then(res => {
+					this.topicList = res.list.map(item => {
+						return {
+							id: item.id,
+							cover: item.titlepic,
+							title: item.title,
+							desc: item.desc,
+							today_count: item.todaypost_count,
+							new_count: item.post_count
+						}
+					})
+				})
+			},
+			// 获取轮播图
+			getSwipers() {
+				this.$H.get('/adsense/0').then(res => {
+					this.swiperList = res.list
+				})
+			},
+
+
 			// 打开发布页
 			openAddInput() {
 				uni.navigateTo({
@@ -204,7 +198,7 @@
 			},
 			// 监听滑动
 			onChangeTab(e) {
-				this.tabIndex = e.detail.current 
+				this.tabIndex = e.detail.current
 			},
 			// 顶踩操作
 			doSupport(e) {
@@ -229,13 +223,13 @@
 			// 上拉加载
 			loadmoreEvent() {
 				// 验证当前是否处于可加载状态
-				if(this.loadmore !== '上拉加载更多') return
+				if (this.loadmore !== '上拉加载更多') return
 				// 设置加载状态
 				this.loadmore = '加载中...'
 				// 模拟请求数据
 				setTimeout(() => {
 					// 加载数据
-					this.list = [...this.list,...this.list]
+					this.list = [...this.list, ...this.list]
 					// 设置加载转态
 					this.loadmore = '上拉加载更多'
 				}, 2000);
@@ -251,7 +245,7 @@
 </script>
 
 <style>
-.page {
-	 touch-action: none;
-}
+	.page {
+		touch-action: none;
+	}
 </style>

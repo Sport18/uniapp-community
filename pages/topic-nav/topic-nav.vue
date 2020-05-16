@@ -3,8 +3,7 @@
 		<!-- 顶部选项卡 -->
 		<scroll-view scroll-x :scroll-into-view="scrollInto" scroll-with-animation class="scroll-row" style="height: 100rpx;">
 			<view v-for="(item,index) in tabBars" :key="index" class="scroll-row-item px-3 py-2 font-md" :id="'tab'+index"
-			 :class="tabIndex === index?'text-main font-lg font-weight-bold':''" @click="changeTab(index)">{{item.name}}
-			</view>
+			 :class="tabIndex === index?'text-main font-lg font-weight-bold':''" @click="changeTab(index)">{{item.classname}}</view>
 		</scroll-view>
 
 		<swiper :duration="150" :current="tabIndex" @change="onChangeTab" :style="'height:'+scrollH+'px;'">
@@ -19,6 +18,10 @@
 						<!-- 上拉加载 -->
 						<load-more :loadmore="item.loadmore"></load-more>
 					</template>
+					<!-- 加载中 -->
+					<teamplate v-else-if="!item.firstLoad">
+						<view class="text-light-muted flex align-center justify-center font-md" style="height: 200rpx;">加载中...</view>
+					</teamplate>
 					<!-- 无数据 -->
 					<template v-else>
 						<no-thing></no-thing>
@@ -30,44 +33,6 @@
 </template>
 
 <script>
-	// 测试数据
-	const demo = [{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},{
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},]
 	import topicList from '@/components/news/topic-list.vue';
 	import loadMore from '@/components/common/load-more.vue';
 	export default {
@@ -83,25 +48,8 @@
 				scrollInto: "",
 				tabIndex: 0,
 				// 顶部选项卡
-				tabBars: [{
-					name: "关注"
-				}, {
-					name: "推荐"
-				}, {
-					name: "体育"
-				}, {
-					name: "财经"
-				}, {
-					name: "娱乐"
-				}, {
-					name: "军事"
-				}, {
-					name: "历史"
-				}, {
-					name: "本地"
-				}, ],
+				tabBars: [],
 				newsList: []
-
 			}
 		},
 		// 监听点击导航栏搜索框
@@ -120,7 +68,7 @@
 			// 计算屏幕宽度
 			uni.getSystemInfo({
 				success: res => {
-					this.scrollH = res.windowHeight - uni.upx2px(200)
+					this.scrollH = res.windowHeight - 50
 				}
 			})
 			// 工具选项生成列表
@@ -129,48 +77,58 @@
 		methods: {
 			// 获取数据
 			getData() {
-				var arr = []
-				for (let i = 0; i < this.tabBars.length; i++) {
-					// 生成列表模板
-					let obj = {
-						// 1. 上拉加载更多 2.加载中... 3.没有更多了
-						loadmore: "上拉加载更多",
-						list: []
+				this.$H.get('/topicclass').then(res => {
+					this.tabBars = res.list
+					// 渲染分类
+					var arr = []
+					for (let i = 0; i < this.tabBars.length; i++) {
+						// 生成列表模板
+						let obj = {
+							// 1. 上拉加载更多 2.加载中... 3.没有更多了
+							loadmore: "上拉加载更多",
+							list: [],
+							page: 1,
+							firstLoad: false
+						}
+						arr.push(obj)
 					}
-					if (i < 2) {
-						obj.list = demo
+					this.newsList = arr
+					// 获取第一个分类的数据
+					if(this.tabBars.length) {
+						this.getList()
 					}
-					arr.push(obj)
-				}
-				this.newsList = arr
+				})
 			},
-			// 关注
-			follow(e) {
-				this.list[e].isFollow = true
-				uni.showToast({
-					title: '关注成功'
-				});
+			
+			// 获取指定分类下的列表
+			getList() {
+				let index = this.tabIndex
+				let id = this.tabBars[index].id
+				let page = this.newsList[index].page
+				let isrefresh = page == 1
+				this.$H.get('/topicclass/' + id + '/topic/' + page).then(res => {
+					let list = res.list.map(item => {
+						return {
+							id: item.id,
+							cover: item.titlepic,
+							title: item.title,
+							desc: item.desc,
+							today_count: item.todaypost_count,
+							new_count: item.post_count
+						}
+					})
+					this.newsList[index].list = isrefresh ? [...list] : [...this.newsList[index].list, ...list],
+					this.newsList[index].loadmore = list.length < 10 ? '没有更多了' : '上拉加载更多'
+					if (isrefresh) {
+						this.newsList[index].firstLoad = true
+					}
+				}).catch(err => {
+					if(!isrefresh) {
+						this.newsList[index].page--
+					}
+				})
 			},
-			// 顶踩操作
-			doSupport(e) {
-				// 拿到当前对象 
-				let item = this.list[e.index]
-				let msg = e.type === 'support' ? '顶' : '踩'
-				// 之前没有操作
-				if (item.support.type === '') {
-					item.support[e.type + '_count']++
-				} else if (item.support.type === 'support' && e.type === 'unsupport') {
-					item.support.support_count--
-					item.support.unsupport_count++
-				} else if (item.support.type === 'unsupport' && e.type === 'support') {
-					item.support.support_count++
-					item.support.unsupport_count--
-				}
-				item.support.type = e.type
-				uni.showToast({
-					title: msg + '成功'
-				});
-			},
+			
 			// 切换选项
 			changeTab(index) {
 				if (this.tabIndex === index) {
@@ -178,11 +136,17 @@
 				}
 				this.tabIndex = index
 				this.scrollInto = 'tab' + index
+				// 获取当前分类下的列表数据
+				if(!this.newsList[this.tabIndex].firstLoad) {
+					this.getList()
+				}
 			},
+			
 			//监听滑动
 			onChangeTab(e) {
 				this.changeTab(e.detail.current)
 			},
+			
 			// 上拉加载更多
 			loadmore(index) {
 				// 拿到当前列表
@@ -191,13 +155,11 @@
 				if (item.loadmore !== '上拉加载更多') return
 				// 修改当前列表加载状态
 				item.loadmore = '加载中...'
-				// 模拟数据请求
-				setTimeout(() => {
-					// 加载数据
-					item.list = [...item.list, ...item.list]
-					// 恢复加载状态
-					item.loadmore = '上拉加载更多'
-				}, 2000)
+				
+				console.log(this.newsList[index].page);
+				// 请求数据
+				item.page++
+				this.getList()
 			}
 		},
 	}

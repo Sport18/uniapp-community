@@ -86,7 +86,7 @@
 			// 取出搜索历史
 			let list = uni.getStorageSync('historySeachText')
 			if(list) {
-				
+				this.list = JSON.parse(list)
 			}
 		},
 		// 监听导航栏输入
