@@ -138,10 +138,21 @@
 			// 提交
 			submit() {
 				// 表单验证
-				if(!this.validate()) return
+				if(this.status) {
+					if(!this.validate()) return
+				}
 				
 				// 提交后端
-				// 登录成功处理
+				this.$H.post('/user/login', {
+					username: this.username,
+					password: this.password
+				}).then(res => {
+					// 登录成功
+					console.log(res);
+				}).catch(err => {
+					// 登录失败
+					console.log(err);
+				})
 			}
 		}
 	}

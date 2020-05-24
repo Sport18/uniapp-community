@@ -95,13 +95,7 @@
 		},
 		data() {
 			return {
-				info: {
-					cover: "/static/demo/topicpic/1.jpeg",
-					title: "话题名称",
-					desc: "话题描述",
-					today_count: 10,
-					new_count: 10
-				},
+				info: {},
 				hotList: [{
 						title: '【新人必读】人类的悲伤并不想通'
 					},
@@ -120,9 +114,13 @@
 				// 默认
 				list1: [],
 				loadtext1: "上拉加载更多",
+				page1: 1,
+				firstLoad1: 1,
 				// 最新
 				list2: [],
 				loadtext2: "上拉加载更多",
+				page2: 1,
+				firstLoad2: 1,
 			}
 		},
 		computed: {
@@ -143,31 +141,60 @@
 		},
 		onLoad(options) {
 			if (options.detail) {
-				let res = JSON.parse(options.detail)
+				this.info = JSON.parse(options.detail)
+				uni.setNavigationBarTitle({
+					title: this.info.title
+				})
 			}
-			this.list1 = demo
+			
+			// 加载数据
+			this.getData()
 		},
 		onReachBottom() {
 			this.loadMore()
 		},
 		methods: {
+			// 加载数据
+			getData() {
+				let no = this.tabIndex+1
+				let page = this['page'+no]
+				let isrefresh = page == 1
+				this.$H.get('/topic/'+this.info.id+'/post/'+page).then(res => {
+					let list = res.list.map(v => {
+						return this.$U.formatCommonList(v)
+					})
+					this['list'+no] = isrefresh ? [...list] : [...this['list'+no], ...list]
+					this['loadtext'+no] = list.length < 10 ? '没有更多了' : '上拉加载更多'
+					if (isrefresh) {
+						this['firstLoad'+no] = true
+					}
+				}).catch(err => {
+					if(!isrefresh) {
+						this['page'+no]--
+					}
+				})
+			},
+			
 			// 切换选项
 			changeTab(index) {
 				this.tabIndex = index
+				if(!this['firstLoad'+(index+1)]) {
+					this.getData()
+				}
 			},
 			// 上拉加载
 			loadMore(){
 				// 拿到当前的索引
 				let index = this.tabIndex
+				let no = index+1
 				// 判断是否处于可加载状态
 				if (this.loadtext !== '上拉加载更多') return
 				// 设置上拉加载状态
-				this['loadtext'+(index+1)] = '加载中...'
+				this['loadtext'+no] = '加载中...'
+				
 				// 请求数据
-				setTimeout(() => {
-					this['list'+(index+1)] = [...this['list'+(index+1)], ...this['list'+(index+1)]]
-					this['loadtext'+(index+1)] = '上拉加载更多'
-				}, 2000);
+				this['page'+no]++
+				this.getData()
 			}
 		}
 	}

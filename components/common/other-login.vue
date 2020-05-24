@@ -15,7 +15,7 @@
 				providerList: []
 			};
 		},
-		onReady() {
+		created() {
 			uni.getProvider({
 				service: 'oauth',
 				success: (result) => {
